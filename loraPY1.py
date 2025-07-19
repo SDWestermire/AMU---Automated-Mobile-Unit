@@ -71,7 +71,7 @@ def monitor_serial_data(lora):
                     if data.startswith("+RCV="):
                         parts = data.split(',')
                         node_id, msg_len, message, rssi, snr = parts[0], parts[1], parts[2], parts[3], parts[4]
-                        print(f"[{current_time}] Node ID: {node_id}, Message: {message}, RSSI: {rssi}, SNR: {snr}")
+                        print(f"[{current_time}] NodeID: {node_id}, Message: {message}, RSSI: {rssi}, SNR: {snr}")
                         print(f"Message:{message}")
                         send_ACK()     
             time.sleep(0.1)  # Prevent CPU overload
@@ -89,7 +89,6 @@ check_address()
 check_rfband()
 
 monitor_serial_data(lora)
-
 
 lora.close
 # monitor_serial_data(ser)
