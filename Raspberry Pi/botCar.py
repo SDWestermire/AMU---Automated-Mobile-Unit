@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # botcar01LoRaPy2.py
 # Raspberry Pi 4 - botCar GPS LoRa Transmitter
 # Modules: NEO-6M via amuGPS, RYLR998 (REYAX)
@@ -86,3 +87,18 @@ if __name__ == "__main__":
     finally:
         lora.close()
         print("[Shutdown] Serial port closed.")
+=======
+from botcar01LoRaPy2 import monitor_serial_data as MSD
+from time import sleep
+import serial
+
+
+# Initialize LoRa loraial communication
+lora = serial.Serial("/dev/ttyS0", 115200, timeout=1)
+lora.write(b"AT+NETWORKID=6\r\n")
+lora.write(b"AT+ADDRESS=2")
+
+while True:
+    MSD(lora)
+    sleep(1.0)
+>>>>>>> 245ad9e85be24a840cade0d6a2cdd04c715c4f35
