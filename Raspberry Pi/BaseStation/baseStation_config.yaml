@@ -1,0 +1,21 @@
+
+# BaseStation Configuration File
+# Ensure the Log_Directory exists before running the BaseStation.
+# Example: mkdir -p ./logs
+
+# LoRa Network Settings
+NetworkID: 6
+Band: 915000000
+Base_Address: 1
+
+# Serial Communication Settings
+Serial_Port: "/dev/ttyS0"
+Baud_Rate: 115200
+Timeout: 1          # Serial read timeout in seconds
+
+# Retry Settings
+Retry_Count: 3      # Number of retries for sending ACK messages
+
+# Logging Settings
+Mission_Logging: Y  # Set to 'Y' to enable mission logging, 'N' to disable
+Log_Directory: "./logs"  # Directory where mission logs will be stored
