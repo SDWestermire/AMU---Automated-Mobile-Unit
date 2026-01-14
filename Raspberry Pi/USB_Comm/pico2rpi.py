@@ -1,10 +1,33 @@
+#pico2rpi.py dated 9 Oct Ver 1
 
 import time
 import usb_cdc
+import json
 
-def send_message(counter):
+def send_telemetry(counter):
     if usb_cdc.data:
-        message = f"Hello from Pico: {counter}\n"
+        telemetry = {
+            "v": 1,
+            "type": "telemetry",
+            "ts": time.time(),
+            "imu": {
+                "heading": 123.45,
+                "compass": 120,
+                "roll": -10.5,
+                "pitch": 5.2
+            },
+            "gps": {
+                "lat": 33.686377,
+                "lon": -117.789653
+            },
+            "calib": {
+                "sys": 3,
+                "gyro": 3,
+                "accel": 3,
+                "mag": 3
+            }
+        }
+        message = json.dumps(telemetry) + "\n"
         usb_cdc.data.write(message.encode('utf-8'))
         print(f"Pico sent: {message.strip()}")
     else:
@@ -23,7 +46,7 @@ print("Pico ready and listening on serial data channel...")
 counter = 0
 
 while True:
-    send_message(counter)
+    send_telemetry(counter)
     receive_message()
     counter += 1
     time.sleep(5)
