@@ -1,8 +1,7 @@
-# main.py
+
 import time
 import json
 import usb_cdc
-
 from imu_bno055 import BNO055IMU
 from GPS_LatLon import get_lat_lon
 
@@ -12,6 +11,7 @@ GPS_STABLE_SAMPLES = 3
 GPS_MAX_WAIT_S = 300
 TELEMETRY_PERIOD_S = 0.5
 PRINT_PERIOD_S = 0.5
+OFFSET_FILE = "imu_offsets.bin"
 
 def _send_to_pi(obj: dict):
     if not usb_cdc.data:
@@ -21,12 +21,30 @@ def _send_to_pi(obj: dict):
 
 def _wait_for_imu_calibration(imu: BNO055IMU):
     print("[STARTUP] Initializing IMU...")
-    imu.initialize()
+    imu.initialize(mode_name="NDOF_FMC_OFF", ext_crystal=True)
     if ROLL_LPF_ALPHA:
         imu.set_roll_lpf(alpha=ROLL_LPF_ALPHA)
-    print("[STARTUP] Waiting for IMU calibration (move the botcar: rotate, tilt, figure-8)...")
-    imu.wait_until_calibrated(poll_interval=0.5)
-    print("[STARTUP] IMU calibrated.")
+    try:
+        with open(OFFSET_FILE, "rb") as f:
+            blob = f.read()
+            imu.set_offsets(blob)
+            print("[STARTUP] IMU offsets restored.")
+            return
+    except Exception:
+        print("[STARTUP] No saved offsets. Waiting for IMU calibration...")
+        while True:
+            sys, gyro, accel, mag = imu.read_calibration_status()
+            print(f"[CALIB] SYS:{sys} GYR:{gyro} ACC:{accel} MAG:{mag}")
+            if all(v == 3 for v in (sys, gyro, accel, mag)):
+                print("[CALIB] IMU fully calibrated.")
+                try:
+                    with open(OFFSET_FILE, "wb") as f:
+                        f.write(imu.get_offsets())
+                        print("[STARTUP] IMU offsets saved.")
+                except Exception as e:
+                    print("[STARTUP] Failed to save offsets:", e)
+                break
+            time.sleep(0.5)
 
 def _wait_for_gps_fix(min_samples=GPS_STABLE_SAMPLES, max_wait_s=GPS_MAX_WAIT_S):
     print("[STARTUP] Waiting for GPS fix...")
@@ -34,7 +52,7 @@ def _wait_for_gps_fix(min_samples=GPS_STABLE_SAMPLES, max_wait_s=GPS_MAX_WAIT_S)
     start = time.monotonic()
     last = None
     while True:
-        coords = get_lat_lon()  # blocking until parsed coords
+        coords = get_lat_lon()
         if not coords:
             continue
         if last is None:
@@ -58,7 +76,6 @@ def _wait_for_gps_fix(min_samples=GPS_STABLE_SAMPLES, max_wait_s=GPS_MAX_WAIT_S)
 
 def main():
     print("=== AMU Pico Startup ===")
-    # Explicitly initialize lat/lon so prints are unambiguous
     lat, lon = None, None
 
     # 1) IMU calibration
@@ -81,21 +98,19 @@ def main():
     last_print = 0.0
     while True:
         heading, roll, pitch, compass = imu.read_euler()
-
-        coords = get_lat_lon()  # blocking; returns latest valid coord
+        sys, gyro, accel, mag = imu.read_calibration_status()
+        coords = get_lat_lon()
         if coords:
             lat, lon = coords
-
         now = time.monotonic()
-
         if now - last_tx >= TELEMETRY_PERIOD_S:
             last_tx = now
             _send_to_pi({
                 "v": 1, "type": "telemetry", "ts": now,
                 "imu": {"heading": heading, "compass": compass, "roll": roll, "pitch": pitch},
-                "gps": {"lat": lat, "lon": lon}
+                "gps": {"lat": lat, "lon": lon},
+                "calib": {"sys": sys, "gyro": gyro, "accel": accel, "mag": mag}
             })
-
         if now - last_print >= PRINT_PERIOD_S:
             last_print = now
             if (lat is not None) and (lon is not None):
@@ -103,8 +118,8 @@ def main():
             else:
                 gps_str = "GPS: NO FIX"
             imu_str = f"IMU: Heading={heading:6.2f}° ({compass}) Roll={roll:6.2f}° Pitch={pitch:6.2f}°"
-            print(gps_str + "\n" + imu_str)
-
+            calib_str = f"CALIB: SYS={sys} GYR={gyro} ACC={accel} MAG={mag}"
+            print(gps_str + "\n" + imu_str + "\n" + calib_str)
         time.sleep(0.05)
 
 if __name__ == "__main__":
