@@ -1,9 +1,25 @@
-node_id: 1
-base_id: 1
+# botcar_config.yaml — Baseline v1.0.3 (botCar AMU)
+# Addressing & radio
+node_id: 2 # LoRa ADDRESS for this AMU
+base_id: 1 # Base station ADDRESS
+node_label: "AMU_02" # Human-friendly label for logs
 serial_port: "/dev/ttyS0"
 baud_rate: 115200
-tx_interval: 1
+network_id: 6
+band: 915000000
+# Role & mission
 role: "scout"
+mission_name: "Campus Test Route"
+# Logging
+mission_logging: true
+log_directory: "./logs"
+csv_logging: true # set to false to disable CSV on AMU side
+# TX pacing & retries
+tx_interval: 0 # seconds between *ACKed* waypoints (0 = disabled)
+retry_delay_min: 3 # randomized backoff lower bound (seconds)
+retry_delay_max: 5 # randomized backoff upper bound (seconds)
+max_retries: 3
+# Waypoints ([lat, lon])
 waypoints:
   - [33.686377, -117.789653]
   - [33.685965, -117.790052]
@@ -11,12 +27,3 @@ waypoints:
   - [33.686268, -117.788997]
   - [33.686559, -117.789462]
   - [33.686377, -117.789653]
-# BotCar Configuration File
-# Ensure the Log_Directory exists before running the BotCarNode.
-# Example: mkdir -p ./logs
-
-Node_ID: "AMU_01"       # Unique identifier for this botCar
-Mission_Logging: Y      # Enable or disable mission logging
-Log_Directory: "./logs" # Directory where mission logs will be stored
-
- 
