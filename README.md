@@ -45,7 +45,7 @@ Core states: STANDBY, PATROL, INVESTIGATE, REPORT, ASSIST, RETURN_HOME
 Transitions driven by detections, commands, battery/safety, and timeouts.
 
 3) Key Features
-4) 
+   
 SensorFrame v1.2‑Expanded
 Unified envelope {v,type,node_id,seq,ts_ms} + typed payloads. Optional nav block for telemetry:T (state, wp_idx, bearing, heading error, distance, motor L/R).
 
