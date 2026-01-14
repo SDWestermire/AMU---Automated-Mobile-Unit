@@ -22,50 +22,35 @@ priority:P — pre‑emptive notifications (E_STOP, THREAT_DETECTED)
 Low airtime uplink: Compact LoRa tokens; comma‑safe parsing on the Base.
 Forward path: A fleet of AMUs with assist behaviors, web dashboards, community integration, and production hardening.
 
-
 2) System Overview (top → bottom)
 
-
 Pico (sensor hub)
-
 Reads BNO055 IMU (heading/roll/pitch/compass)
 Reads NEO‑6M GPS (lat, lon, fix, speed)
 Builds typed SensorFrame objects (T/S/M/P) and sends JSON over USB CDC to the Pi.
-
-
 
 Pi (AMU uplink & compute)
 
 Receives Pico JSON lines, ACKs seq, dispatches by type (on_T/S/M/P)
 Maps essentials to compact LoRa tokens (e.g., FS, MS, PR, NV) for the BaseStation.
 
-
-
 BaseStation (LoRa listener & logging)
 
 Parses +RCV=src,len,data,RSSI,SNR safely (split from the right)
 Handles REG, FS, MS, PR, etc., ACKs back, logs mission data with RSSI/SNR.
-
-
 
 Mission Control (state machine)
 
 Core states: STANDBY, PATROL, INVESTIGATE, REPORT, ASSIST, RETURN_HOME
 Transitions driven by detections, commands, battery/safety, and timeouts.
 
-
-
-
 3) Key Features
-
-
+4) 
 SensorFrame v1.2‑Expanded
 Unified envelope {v,type,node_id,seq,ts_ms} + typed payloads. Optional nav block for telemetry:T (state, wp_idx, bearing, heading error, distance, motor L/R).
 
-
 Pre‑emptive Priority
 priority:P frames bypass queues and expect fast ACK (≤ 50 ms); used for E_STOP, critical alerts, and state‑transition notices.
-
 
 LoRa Uplink Tokens (Pi → Base)
 
@@ -75,12 +60,9 @@ MS:<id>:<state>:<code>[:detail] — mission state
 PR:<id>:<code>[:args] — priority / alerts
 NV:<id>:<state>:<wp_idx>:<dist_m>:<heading_err> — navigation status (optional)
 
-
-
 Comma‑safe BaseStation parsing
+
 Always split RSSI/SNR from the right, then src,len,data from the left; commas inside payloads won’t break parsing.
-
-
 
 4) Repo Layout (proposed)
 AMU/
@@ -109,11 +91,10 @@ AMU/
 │
 └─ .github/workflows/ci.yml   # Lint + JSON schema validate (future)
 
-
 Note: If you use different directories, keep the same intent: clean separation of Pico sensors, Pi uplink, and BaseStation.
 
-
 5) Quick Start
+   
 Hardware
 
 Raspberry Pi Pico (USB CDC enabled)
@@ -142,7 +123,6 @@ Expected:
 
 BaseStation prints REG and FS, with ACK lines and a mission log file under ./logs/mission_log_*.txt.
 
-
 6) SensorFrame (short spec)
 Envelope (all types):
 JSON{  "v": 1,  "type": "telemetry:T | sensor:S | mission:M | priority:P",  "node_id": 2,  "seq": 145,  "ts_ms": 582341}Show more lines
@@ -159,7 +139,6 @@ ACK & pacing
 Pi responds ACK:<seq>\r\n to valid frames.
 Optional SLOW:<ms> advisories may be sent to slow down a type or globally.
 Pico may resend if no ACK within a window (e.g., 250 ms), bounded retries.
-
 
 7) Pi ↔ Pico Command Protocol (JSON lines)
 Pi → Pico:
@@ -178,9 +157,7 @@ INVESTIGATE → REPORT when evidence collected or timeout
 REPORT → PATROL / STANDBY / ASSIST based on base commands
 Any state → STANDBY on priority:P E_STOP
 
-
 Pico skeleton: AMUStateMachine with AMUStatePatrol, AMUStateInvestigate, AMUStateReport, AMUStateAssist, AMUStateReturnHome, AMUStateStandby.
-
 
 9) Roadmap (10 weeks @ ~20 h/week)
 
@@ -199,16 +176,13 @@ Commit convention: type(scope): summary (e.g., feat(pico): add nav block)
 Keep changes small; include doc updates (SensorFrame examples, README sections)
 Open a PR with what/why/how; include bench/field notes if applicable.
 
-
 Accreditations: All Python file headers should include Steven Westermire as creator and acknowledgments per project policy.
-
 
 11) License & Acknowledgments
 
 License: (choose MIT/BSD/Apache‑2.0; pending)
 Hardware datasheets: BNO055, NEO‑6M, REYAX RYLR998 (LoRa)
 Thanks to the CH‑53 community ethos—mission‑first and systems‑reliable.
-
 
 12) Contact
 Steven “Maddog / Gunny” Westermire
