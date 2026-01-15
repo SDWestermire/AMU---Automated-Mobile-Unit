@@ -1,4 +1,6 @@
 #pico2rpi.py dated 9 Oct Ver 1
+#DEPRECIATED on 14 Jan 2025
+#Remains as historical code - I might move it lter
 
 import time
 import usb_cdc
@@ -49,4 +51,5 @@ while True:
     send_telemetry(counter)
     receive_message()
     counter += 1
+
     time.sleep(5)
